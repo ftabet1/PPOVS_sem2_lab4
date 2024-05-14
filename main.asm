@@ -10,8 +10,9 @@ _c_int00:
 	orm	#1, PMST
 	nop
 	
-	stm #gar, AR7
+	stm  #ach, AR0 ;frequency response graph
 main_loop:
+	stm #gar, AR7
 	;init calc_arg args
   	stm #C1,  AR2	;AR2 - const cos(a)
   	stm #S1,  AR3	;AR3 - const sin(a)
@@ -48,13 +49,25 @@ main_loop:
 	ld	*ar4+, A
 	call	loop_iir
 	
-	addm #2, *AR7
+	addm #2, *AR7	;current harmonic
+
+	
 	XOR B, B
 	ld *AR7, 16, B
 	add #-200, 16, B
 	nop
 	xc 2, BGT
 	b loop
+	
+
+	stm #yn+100, AR7 ;yn
+	stm #256-1, AR1	;ticks
+loop_ach:
+	ld *AR7, T
+	mac *AR7+, A
+	banz loop_ach, *AR1-
+	sfta A, #-8
+	sth A, *AR0+
 	
 	b main_loop
 	;while(true)
@@ -193,7 +206,7 @@ calc_sig:
 		masr *AR3, *AR5, B	;B -= sin(a) * sin(an)
   		sth A, *AR5 ;Sn
   		sth B, *AR4 ;Cn
-  		sfta A, #-4
+  		sfta A, #-2
   		sth A, *AR6+		;save current sine value
   	banz calc_sig, *AR1-	;loop
   	st #0, *AR5		;reset sin(0) value
@@ -245,7 +258,8 @@ N 	 .set  	2048	;number of sine tick's
 ;----------------------------------
 ;*************signals**************
 xn	.space (N*16)
-yn	.space ((N+40)*16)
+yn	.space ((N+5)*16)
+ach	.space (100)*16
 ;----------------------------------
 
 gar 	 .word 	0x0001	;harm. number	
